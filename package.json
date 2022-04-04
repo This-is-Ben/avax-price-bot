@@ -1,0 +1,24 @@
+{
+  "name": "avax-price-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "priceAVAX.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/This-is-Ben/avax-price-bot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/This-is-Ben/avax-price-bot/issues"
+  },
+  "homepage": "https://github.com/This-is-Ben/avax-price-bot#readme",
+  "dependencies": {
+    "axios": "^0.26.1",
+    "discord.js": "^12.6.0",
+    "dotenv": "^16.0.0"
+  }
+}

@@ -1,13 +1,15 @@
 require("dotenv").config(); // Load .env file
 const axios = require("axios");
-const Discord = require("discord.js");
-const client = new Discord.Client();
+const { Client, Intents } = require("discord.js");
+const client = new Client({
+  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+});
 
 function getPrices() {
   // API for price data.
   axios
     .get(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${process.env.COIN_ID}`
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${process.env.COIN_ID}&price_change_percentage=1h%2C24h%2C7d%2C30d`
     )
     .then((res) => {
       // If we got a valid response
@@ -18,34 +20,40 @@ function getPrices() {
       ) {
         let currentPrice = res.data[0].current_price || 0; // Default to zero
         let priceChangePct = res.data[0].price_change_percentage_24h || 0; //Default to zero
+        let priceChangePctWeek =
+          res.data[0].price_change_percentage_7d_in_currency || 0;
+        let priceChangePctMonth =
+          res.data[0].price_change_percentage_30d_in_currency || 0;
         let priceChange = res.data[0].price_change_percentage_24h || 0; // Default to zero
         let symbol = res.data[0].symbol || "?";
-        client.user.setPresence({
-          game: {
-            // Example: "Watching -5,52% | BTC"
-            name: `${priceChange.toFixed(2)}% | ${symbol.toUpperCase()}`,
-            type: 3, // Use activity type 3 which is "Watching"
-          },
-        });
 
-        client.user.setPresence({
-          game: {
-            //Example: "Watching -5.52% | BTC"
-            name: `${priceChange.toFixed(2)} USD (${priceChangePct.toFixed(
-              2
-            )}%)`,
-            type: 3, // Use activity type 3 which is "Watching"
-          },
-        });
+        let activities = [
+          `24hr: ${priceChangePct.toFixed(2)}%`,
+          `7d: ${priceChangePctWeek.toFixed(2)}%`,
+          `30d: ${priceChangePctMonth.toFixed(2)}%`,
+        ];
+        let index = 0;
+        setInterval(() => {
+          if (index === activities.length) index = 0;
+          client.user.setPresence({
+            activities: [
+              {
+                name: activities[index],
+                type: "WATCHING",
+              },
+            ],
+          });
+          index++;
+        }, 5000);
 
-        client.guilds
+        client.guilds.cache
           .find((guild) => guild.id === process.env.SERVER_ID)
           .me.setNickname(
-            `${symbol} ${currentPrice
-              .toLocaleString()
-              .replace(/,/g, process.env.THOUSAND_SEPARATOR)}${
+            `${symbol.toUpperCase()} ${
               process.env.CURRENCY_SYMBOL
-            }`
+            }${currentPrice
+              .toLocaleString()
+              .replace(/,/g, process.env.THOUSAND_SEPARATOR)}`
           );
 
         console.log("Updated price to", currentPrice);
