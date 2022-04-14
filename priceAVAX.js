@@ -5,7 +5,7 @@ const client = new Client({
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
 });
 
-function getPrices() {
+function getPrices(index) {
   // API for price data.
   axios
     .get(
@@ -25,6 +25,23 @@ function getPrices() {
         let priceChangePctMonth =
           res.data[0].price_change_percentage_30d_in_currency || 0;
         let symbol = res.data[0].symbol || "?";
+
+        let activities = [
+          `24hr: ${priceChangePct.toFixed(2)}%`,
+          `7d: ${priceChangePctWeek.toFixed(2)}%`,
+          `30d: ${priceChangePctMonth.toFixed(2)}%`,
+        ];
+
+        if (index === activities.length) index = 0;
+        client.user.setPresence({
+          activities: [
+            {
+              name: activities[index],
+              type: "WATCHING",
+            },
+          ],
+        });
+        index++;
 
         client.guilds.cache
           .find((guild) => guild.id === process.env.SERVER_ID)
@@ -52,25 +69,12 @@ client.on("ready", () => {
 
   getPrices(); // Ping server once on startup
   // Ping the server and set the new status message every x minutes. (Minimum of 1 minute)
-  let activities = [
-    `24hr: ${priceChangePct.toFixed(2)}%`,
-    `7d: ${priceChangePctWeek.toFixed(2)}%`,
-    `30d: ${priceChangePctMonth.toFixed(2)}%`,
-  ];
   let index = 0;
-  setInterval(() => {
-    getPrices();
-    if (index === activities.length) index = 0;
-    client.user.setPresence({
-      activities: [
-        {
-          name: activities[index],
-          type: "WATCHING",
-        },
-      ],
-    });
-    index++;
-  }, Math.max(1, process.env.MC_PING_FREQUENCY || 1) * 60 * 1000);
+  setInterval(
+    getPrices(index),
+    Math.max(1, process.env.MC_PING_FREQUENCY || 1) * 60 * 1000
+  );
 });
+
 // Login to Discord
 client.login(process.env.DISCORD_TOKEN);
